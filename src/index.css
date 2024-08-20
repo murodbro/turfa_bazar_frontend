@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera */
+}
+
+/* styles.css */
+.image-gallery .image-gallery-left-nav,
+.image-gallery .image-gallery-right-nav {
+  width: 80px; /* Set the desired width */
+  height: 300px; /* Set the desired height */
+}
+
+.image-gallery .image-gallery-left-nav:before,
+.image-gallery .image-gallery-right-nav:before {
+  font-size: 30px; /* Adjust the icon size */
+}
