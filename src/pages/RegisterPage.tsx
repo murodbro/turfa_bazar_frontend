@@ -4,6 +4,7 @@ import { FormikErrors, FormikHelpers, useFormik } from "formik";
 import * as yup from "yup";
 import { toast } from "react-toastify";
 import useRegister from "../hooks/useRegister";
+import image from "../media/turfabazarlogo.jpg";
 
 interface FormValues {
   first_name: string;
@@ -83,11 +84,7 @@ const RegisterPage: React.FC = () => {
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <img
-          className="mx-auto h-10 w-auto"
-          src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
-          alt="Your Company"
-        />
+        <img className="mx-auto h-10 w-auto" src={image} alt="Your Company" />
         <h2 className="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
           Registratsiyadan o'tish
         </h2>

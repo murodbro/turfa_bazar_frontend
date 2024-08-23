@@ -225,7 +225,10 @@ export default function OrderHistory() {
                                 <h5>{product.product}</h5>
                                 <p className="mt-2 sm:mt-0">
                                   {new Intl.NumberFormat("en-US").format(
-                                    product.unit_price
+                                    product.product_variation &&
+                                      product.product_variation
+                                      ? product.product_variation.price
+                                      : product.unit_price
                                   )}{" "}
                                   UZS
                                 </p>
@@ -238,6 +241,17 @@ export default function OrderHistory() {
                                 <h5>
                                   <b>Soni: </b>
                                   {product.quantity} ta
+                                </h5>
+                                <h5>
+                                  <b>Mahsulat haqida: </b>
+                                  {product.product_variation &&
+                                    product.product_variation.variation_values.map(
+                                      (value) => (
+                                        <span className="pl-2" id={value.id}>
+                                          {value.value}
+                                        </span>
+                                      )
+                                    )}{" "}
                                 </h5>
                                 <h5>
                                   <b>Jami: </b>

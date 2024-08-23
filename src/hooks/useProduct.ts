@@ -5,7 +5,7 @@ export interface Gallery {
   gallery: string;
 }
 
-interface VariationTypes {
+export interface VariationTypes {
   id: string;
   name: string;
 }
@@ -19,7 +19,7 @@ export interface VariationValues {
 export interface Variations {
   id: string;
   product: string;
-  price: string;
+  price: number;
   stock: number;
   variation_values: VariationValues[];
 }

@@ -90,7 +90,7 @@ const ProductDetailPage = () => {
     []
   );
 
-  const [price, setPrice] = useState(data?.base_price);
+  const [price, setPrice] = useState<number | null>(null);
   const [inStock, setInStock] = useState<number | null>(null);
 
   const initialValues = {
@@ -113,10 +113,9 @@ const ProductDetailPage = () => {
 
   const fetchAddCartItem = async () => {
     const matchingVariation = getMatchingVariation();
-    console.log(matchingVariation?.id);
     const payload = {
       productId: productId,
-      variationId: matchingVariation ? matchingVariation.id : "",
+      variationId: matchingVariation ? matchingVariation.id : null,
     };
 
     if (userId) {
@@ -196,12 +195,12 @@ const ProductDetailPage = () => {
 
   useEffect(() => {
     if (data) {
-      if (data.variations && data.variations.length > 1) {
-        setSelectedVariation(data.variations[0].variation_values);
+      if (data.variations && data.variations.length > 0) {
+        setSelectedVariation([data.variations[0].variation_values[0]]);
       } else {
         setInStock(data.variations[0].stock);
       }
-      setPrice(data?.base_price);
+      setPrice(Number(data.variations[0].price));
     }
   }, [data]);
 
@@ -297,7 +296,7 @@ const ProductDetailPage = () => {
               {data?.variations
                 ? data?.variations[0].variation_values.map((variationType) => (
                     <div key={variationType.type} className="flex gap-2">
-                      <div className="text-lg font-semibold mb-2">
+                      <div className="text-lg font-semibold mb-2 pr-4">
                         {variationType.type &&
                           data.variation_types
                             .filter(
@@ -335,7 +334,7 @@ const ProductDetailPage = () => {
                                   selectedVariation.some(
                                     (v) => v.id === value.id
                                   )
-                                    ? "bg-indigo-500 text-white border-indido-600"
+                                    ? "bg-indigo-500 text-white border-transparent border-indido-600"
                                     : "border-gray-300"
                                 }`}
                                 onClick={() =>
@@ -392,6 +391,7 @@ const ProductDetailPage = () => {
               >
                 Savatga qo'shish
               </button>
+
               <button
                 onClick={() => navigate("/")}
                 type="button"

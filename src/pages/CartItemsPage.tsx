@@ -19,7 +19,7 @@ export interface CartItem {
   sub_total: number;
   image: string;
   base_price: number;
-  variations: Variations;
+  product_variation: Variations;
 }
 
 interface CartItems extends Array<CartItem> {}
@@ -27,14 +27,9 @@ interface CartItems extends Array<CartItem> {}
 const CartItemsPage = () => {
   const navigate = useNavigate();
   const { authTokens, userId } = useAuthStore();
-
   const [cartItems, setCartItems] = useState<CartItems>([]);
-
-  const [subTotal, setSubTotal] = useState<number>(0);
-  const [discount, setDiscount] = useState<number>(0);
-  const [grandTotal, setGrandTotal] = useState<number>(0);
-
   const { setCartItem, updateCartItems } = useCartStore();
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -56,12 +51,12 @@ const CartItemsPage = () => {
     fetchCartItems();
   }, [authTokens, userId]);
 
-  const fetchAddCartItem = async (productId: string) => {
+  const fetchAddCartItem = async (variationId: string) => {
     try {
       const response = await axiosInstance.patch(
         `cart/cart_items/${userId}/`,
         {
-          productId: productId,
+          variationId: variationId,
           action: "adding",
         },
         {
@@ -72,16 +67,15 @@ const CartItemsPage = () => {
       );
       if (response.data.ok) {
         const updatedCartItem = cartItems.map((item) =>
-          item.product_id === productId
+          item.product_variation.id === variationId
             ? {
                 ...item,
                 quantity: item.quantity + 1,
-                sub_total: item.sub_total + item.base_price,
+                sub_total: item.sub_total + item.product_variation.price,
               }
             : item
         );
         setCartItems(updatedCartItem);
-        calculateSumm(updatedCartItem);
         toast.info(response.data.message || "Xatolik yuz berdi");
       }
     } catch (error: any) {
@@ -89,12 +83,12 @@ const CartItemsPage = () => {
     }
   };
 
-  const fetchRemoveCartItem = async (productId: string) => {
+  const fetchRemoveCartItem = async (variationId: string) => {
     try {
       const response = await axiosInstance.patch(
         `cart/cart_items/${userId}/`,
         {
-          productId: productId,
+          variationId: variationId,
           action: "remove",
         },
         {
@@ -106,20 +100,19 @@ const CartItemsPage = () => {
       if (response.data.ok) {
         const updatedCartItem = cartItems
           .map((item) =>
-            item.product_id === productId
+            item.product_variation.id === variationId
               ? item.quantity === 1
                 ? null
                 : {
                     ...item,
                     quantity: item.quantity - 1,
-                    sub_total: item.sub_total - item.base_price,
+                    sub_total: item.sub_total - item.product_variation.price,
                   }
               : item
           )
           .filter((item): item is CartItem => item !== null);
 
         setCartItems(updatedCartItem);
-        calculateSumm(updatedCartItem);
         toast.info(response.data.message || "Xatolik yuz berdi");
       }
     } catch (error: any) {
@@ -127,7 +120,7 @@ const CartItemsPage = () => {
     }
   };
 
-  const fetchDeleteCartItem = async (productId: string) => {
+  const fetchDeleteCartItem = async (variationId: string) => {
     const userConfirmed = window.confirm(
       "Mahulot savatdan olib tashlansinmi ?"
     );
@@ -141,7 +134,7 @@ const CartItemsPage = () => {
         `cart/cart_items/${userId}/`,
         {
           data: {
-            productId: productId,
+            variationId: variationId,
           },
           headers: {
             Authorization: `Bearer ${authTokens}`,
@@ -150,10 +143,9 @@ const CartItemsPage = () => {
       );
       if (response.data.ok) {
         const updatedCartItem = cartItems.filter(
-          (item) => item.product_id !== productId
+          (item) => item.product_variation.id !== variationId
         );
         setCartItems(updatedCartItem);
-        calculateSumm(updatedCartItem);
         toast.info(response.data.message || "Xatolik yuz berdi");
       }
     } catch (error: any) {
@@ -163,22 +155,23 @@ const CartItemsPage = () => {
 
   useEffect(() => {
     setCartItems(cartItems);
-    calculateSumm(cartItems);
     updateCartItems(cartItems);
   }, [cartItems]);
 
-  const calculateSumm = (cartItems: CartItems) => {
-    const subTotal = parseFloat(
-      cartItems
-        ? cartItems.reduce((acc, item) => acc + item.sub_total, 0).toFixed(2)
-        : "0.00"
-    );
-    const discount = parseFloat((subTotal * 0.02).toFixed(2));
-    const grandTotal = parseFloat((subTotal - discount).toFixed(2));
+  useEffect(() => {
+    calculateTotals();
+  }, [cartItems]);
 
-    setSubTotal(subTotal);
-    setDiscount(discount);
-    setGrandTotal(grandTotal);
+  const calculateTotals = () => {
+    let subtotal = 0;
+    cartItems.forEach((product) => {
+      if (product.product_variation) {
+        subtotal += product.product_variation.price * product.quantity;
+      } else {
+        subtotal += product.base_price * product.quantity;
+      }
+    });
+    setTotal(subtotal);
   };
 
   return (
@@ -201,7 +194,7 @@ const CartItemsPage = () => {
                         <div className="flex-shrink-0">
                           <img
                             src={`${baseURL}${product.image}`}
-                            className="h-24 w-24 rounded-md object-cover object-center sm:h-48 sm:w-48"
+                            className="h-10 w-10 rounded-md object-cover object-center sm:h-48 sm:w-48"
                           />
                         </div>
 
@@ -220,20 +213,43 @@ const CartItemsPage = () => {
                                   </a>
                                 </h3>
                               </div>
-                              <div className="mt-1 flex text-sm">
-                                <p className="text-gray-500">sariq</p>
 
-                                <p className="ml-4 border-l border-gray-200 pl-4 text-gray-500">
-                                  2xl
-                                </p>
+                              <div className="mt-1 flex gap-2 text-sm">
+                                <span>Mahsulat turi: </span>
+                                {product.product_variation &&
+                                  product.product_variation.variation_values.map(
+                                    (value) => (
+                                      <>
+                                        <p className="border-r border-gray-200 pr-2 text-gray-500">
+                                          {value.value}
+                                        </p>
+                                      </>
+                                    )
+                                  )}
                               </div>
                               <p className="mt-1 text-sm font-medium text-gray-900">
-                                {product.base_price !== undefined
+                                {product.product_variation
                                   ? `${new Intl.NumberFormat("en-US").format(
-                                      Number(product.base_price)
+                                      Number(product.product_variation.price)
                                     )} UZS`
-                                  : ""}
+                                  : `${new Intl.NumberFormat("en-US").format(
+                                      Number(product.base_price)
+                                    )} UZS`}
                               </p>
+
+                              <div className="pt-4">
+                                {product.product_variation &&
+                                product.product_variation ? (
+                                  <div className="space-y-6 text-sm text-green-600">
+                                    Sotuvda {product.product_variation.stock}{" "}
+                                    dona mavjud
+                                  </div>
+                                ) : (
+                                  <div className="text-red-400 text-sm">
+                                    Sotuvda mavjud emas
+                                  </div>
+                                )}
+                              </div>
                             </div>
 
                             <div className="mt-4 sm:mt-0 sm:pr-9">
@@ -242,7 +258,9 @@ const CartItemsPage = () => {
                                   type="button"
                                   className="w-12 h-8 border-2 rounded border-gray-300 flex items-center justify-center"
                                   onClick={() =>
-                                    fetchRemoveCartItem(product.product_id)
+                                    fetchRemoveCartItem(
+                                      product.product_variation.id
+                                    )
                                   }
                                 >
                                   <MinusIcon style={{ color: "teal" }} />
@@ -255,21 +273,23 @@ const CartItemsPage = () => {
                                 <button
                                   type="button"
                                   disabled={
-                                    !product.variations ||
+                                    !product.product_variation ||
                                     product.quantity + 1 >
-                                      product.variations.stock ||
-                                    product.variations.stock === 0
+                                      product.product_variation.stock ||
+                                    product.product_variation.stock === 0
                                   }
                                   className={
-                                    !product.variations ||
+                                    !product.product_variation ||
                                     product.quantity + 1 >
-                                      product.variations.stock ||
-                                    product.variations.stock === 0
+                                      product.product_variation.stock ||
+                                    product.product_variation.stock === 0
                                       ? "w-12 h-8 border-2 rounded border-gray-300 flex items-center justify-center cursor-not-allowed"
                                       : "w-12 h-8 border-2 rounded border-gray-300 flex items-center justify-center"
                                   }
                                   onClick={() =>
-                                    fetchAddCartItem(product.product_id)
+                                    fetchAddCartItem(
+                                      product.product_variation.id
+                                    )
                                   }
                                 >
                                   <AddIcon style={{ color: "teal" }} />
@@ -279,7 +299,9 @@ const CartItemsPage = () => {
                               <div className="absolute right-0 top-0">
                                 <button
                                   onClick={() =>
-                                    fetchDeleteCartItem(product.product_id)
+                                    fetchDeleteCartItem(
+                                      product.product_variation.id
+                                    )
                                   }
                                   type="button"
                                   className="-m-2 inline-flex  text-gray-400 hover:text-red-500"
@@ -292,20 +314,6 @@ const CartItemsPage = () => {
                               </div>
                             </div>
                           </div>
-
-                          <p
-                            className={
-                              product.variations && product.variations.stock
-                                ? "mt-4 flex space-x-2 text-sm text-gray-700"
-                                : "mt-4 flex space-x-2 text-sm text-red-700"
-                            }
-                          >
-                            {product.variations && product.variations.stock ? (
-                              <span>{`Sotuvda ${product.variations.stock} dona bor`}</span>
-                            ) : (
-                              <span>Sotuvda mavjud emas!</span>
-                            )}
-                          </p>
                         </div>
                       </li>
                     ))
@@ -343,34 +351,34 @@ const CartItemsPage = () => {
               </h2>
 
               <dl className="mt-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <dt className="text-sm text-gray-600">Jami haridingiz:</dt>
-                  <dd className="text-sm font-medium text-gray-900">
-                    {new Intl.NumberFormat("en-US").format(Number(subTotal))}{" "}
-                    UZS
-                  </dd>
-                </div>
+                {cartItems.map((product) => (
+                  <div
+                    key={product.id}
+                    className="flex items-center justify-between border-t border-gray-200 pt-4"
+                  >
+                    <dt className="flex text-sm text-gray-800">
+                      <span>{product.product}</span>
+                    </dt>
+                    <div>
+                      <small>{product.quantity} Dona</small>
+                    </div>
+                    <dd className="text-sm font-medium text-gray-900">
+                      {new Intl.NumberFormat("en-US").format(
+                        product.product_variation
+                          ? product.product_variation.price
+                          : product.base_price * product.quantity
+                      )}{" "}
+                      UZS
+                    </dd>
+                  </div>
+                ))}
 
-                <div className="flex items-center justify-between border-t border-gray-200 pt-4">
-                  <dt className="flex text-sm text-gray-600">
-                    <span>Chegirma 2 % :</span>
-                    <a
-                      href="#"
-                      className="ml-2 flex-shrink-0 text-gray-400 hover:text-gray-500"
-                    ></a>
-                  </dt>
-                  <dd className="text-sm font-medium text-gray-900">
-                    {new Intl.NumberFormat("en-US").format(Number(discount))}{" "}
-                    UZS
-                  </dd>
-                </div>
                 <div className="flex items-center justify-between border-t border-gray-200 pt-4">
                   <dt className="text-base font-medium text-gray-900">
                     Jami buyurtmangiz:
                   </dt>
                   <dd className="text-base font-medium text-gray-900">
-                    {new Intl.NumberFormat("en-US").format(Number(grandTotal))}{" "}
-                    UZS
+                    {new Intl.NumberFormat("en-US").format(total)} UZS
                   </dd>
                 </div>
               </dl>

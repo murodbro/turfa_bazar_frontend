@@ -3,6 +3,7 @@ import Alert from "./Alert";
 import { useEffect, useState } from "react";
 import { axiosInstance, baseURL } from "../services/api-client";
 import useAuthStore from "../context/useAuthContext";
+import { Variations } from "../hooks/useProduct";
 
 export interface OrderItem {
   id: string;
@@ -15,6 +16,7 @@ export interface OrderItem {
   sub_total: number;
   image: string;
   description: string;
+  product_variation: Variations;
 }
 
 export interface Order {
@@ -103,7 +105,28 @@ export default function OrderDetails() {
                   </div>
                   <div className="mt-6 flex flex-col space-y-2">
                     <div className="flex">
-                      <dt className="font-medium text-gray-900">Miqdori:</dt>
+                      {item.product_variation && (
+                        <>
+                          <dt className="font-medium text-gray-900 pl-2">
+                            Mahsulat haqida:
+                          </dt>
+                          {item.product_variation &&
+                            item.product_variation.variation_values.map(
+                              (value) => (
+                                <dd
+                                  key={value.id}
+                                  className="ml-2 text-gray-700 pl-2"
+                                >
+                                  {value.value}
+                                </dd>
+                              )
+                            )}
+                        </>
+                      )}
+                      <dt className="font-medium text-gray-900 pl-4">
+                        Miqdori:
+                      </dt>
+
                       <dd className="ml-2 text-gray-700">{item.quantity} ta</dd>
                     </div>
                     <div className="flex">
@@ -111,10 +134,11 @@ export default function OrderDetails() {
                         <dt className="font-medium text-gray-900">Narxi:</dt>
                         <dd className="ml-2 text-gray-700">
                           <dd className="ml-2 text-gray-700">
-                            {new Intl.NumberFormat("en-US").format(
-                              item.unit_price
-                            )}{" "}
-                            UZS
+                            {item.product_variation
+                              ? `${new Intl.NumberFormat("en-US").format(
+                                  Number(item.product_variation.price)
+                                )} UZS`
+                              : item.unit_price}
                           </dd>
                         </dd>
                       </div>
@@ -136,8 +160,6 @@ export default function OrderDetails() {
             ))}
 
           <div className="sm:ml-40 sm:pl-6">
-            <h3 className="sr-only">Your information</h3>
-            <h4 className="sr-only">Addresses</h4>
             <dl className="grid grid-cols-2 gap-x-6 py-10 text-sm">
               <div>
                 <dt className="font-medium text-gray-900">Buyurtma manzili</dt>
