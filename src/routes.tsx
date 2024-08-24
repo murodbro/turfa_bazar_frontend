@@ -11,6 +11,7 @@ import PrivateRoute from "./utils/privateRouter";
 import UserDetail from "./components/UserDetail";
 import OrderDetails from "./components/OrderDetails";
 import OrderHistory from "./components/OrderHistory";
+import { ForgotPassword } from "./pages/ForgotPasswordPage";
 
 const router = createBrowserRouter([
   {
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
   },
   { path: "/sign_in", element: <SignIn /> },
   { path: "/register", element: <RegisterPage /> },
+  { path: "/forgot_password", element: <ForgotPassword /> },
 ]);
 
 export default router;

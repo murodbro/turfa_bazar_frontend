@@ -8,6 +8,9 @@ import { ClipLoader } from "react-spinners";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import DialogModal from "./Dialog";
+import { CartItem } from "../pages/CartItemsPage";
+
+interface CartItems extends Array<CartItem> {}
 
 interface OrderItem {
   id: string;
@@ -51,6 +54,8 @@ export default function CheckoutForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [dialogInput, setDialogInput] = useState("");
+  const [total, setTotal] = useState(0);
+
   const navigate = useNavigate();
 
   const initialValues = {
@@ -62,6 +67,30 @@ export default function CheckoutForm() {
     buy_cash: null,
     recive_by_deliver: null,
   };
+
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      try {
+        const response = await axiosInstance.get<CartItems>(
+          `cart/cart_items/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${authTokens}`,
+            },
+          }
+        );
+        if (response.status === 200) {
+          const total = response.data
+            .map((cartItem) => cartItem.sub_total)
+            .reduce((acc, subTotal) => acc + subTotal, 0);
+          setTotal(total);
+        }
+      } catch (error: any) {
+        toast.error("Xatolik yuz berdi !");
+      }
+    };
+    fetchCartItems();
+  }, [authTokens, userId]);
 
   const handleOrderStatus = async (orderId: string) => {
     try {
@@ -529,8 +558,14 @@ export default function CheckoutForm() {
                         formik.values.buy_cash === false
                           ? "border-indigo-500"
                           : ""
+                      } ${
+                        total >= 999999 ? "opacity-50 cursor-not-allowed" : ""
                       }`}
-                      onClick={() => formik.setFieldValue("buy_cash", false)}
+                      onClick={() => {
+                        if (total < 999999) {
+                          formik.setFieldValue("buy_cash", false);
+                        }
+                      }}
                     >
                       <span className="flex flex-1">
                         <span className="block text-sm font-medium text-gray-900">
@@ -564,6 +599,13 @@ export default function CheckoutForm() {
                     <div className="text-red-500 text-sm mt-2">
                       {formik.errors.buy_cash}
                     </div>
+                  )}
+                  {total >= 999999 ? (
+                    <div className="text-red-500 text-sm mt-2">
+                      Onlayn to'lash uchun 1,000,000 dan oshib ketmaslik kerak
+                    </div>
+                  ) : (
+                    ""
                   )}
                 </div>
 

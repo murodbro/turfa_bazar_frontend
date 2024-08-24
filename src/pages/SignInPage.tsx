@@ -19,7 +19,7 @@ const validationSchema = yup.object({
   email: yup
     .string()
     .email("Iltimos elektron Pochtangizni to'g'ri kiritng!")
-    .required("Eletron pochtangizni kiriting!"),
+    .required("Elektron pochtangizni kiriting!"),
   password: yup
     .string()
     .required("Parol kiriting")
@@ -175,8 +175,8 @@ export function SignIn() {
                 </div>
                 <div className="text-sm leading-6">
                   <a
-                    href="#"
-                    className="font-semibold text-indigo-600 hover:text-indigo-500"
+                    onClick={() => navigate("/forgot_password")}
+                    className="font-semibold text-indigo-600 hover:text-indigo-500 cursor-pointer"
                   >
                     Parolni unutdim
                   </a>

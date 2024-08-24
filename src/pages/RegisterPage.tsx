@@ -27,7 +27,7 @@ const validationSchema = yup.object({
   email: yup
     .string()
     .email("Iltimos elektron Pochtangizni to'g'ri kiritng!")
-    .required("Eletron pochtangizni kiriting!"),
+    .required("Elektron pochtangizni kiriting!"),
   password: yup
     .string()
     .required("Parol kiriting")
